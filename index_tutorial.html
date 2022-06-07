@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>D3 Tutorial</title>
+</head>
+<body>
+  
+  <svg id="svg" width="800" height="500">
+    <!-- <g>
+      <circle></circle>
+      <text></text>
+    </g> -->
+    <!-- <g>
+      <circle></circle>
+      <text></text>
+    </g> -->
+    <!-- <path d="M 10,30
+      A 20,20 0,0,1 50,30
+      A 20,20 0,0,1 90,30
+      Q 90,60 50,90
+      Q 10,60 10,30 z"/> -->
+  </svg>
+
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script>
+    d3.select('body')        // select an element to host
+      .selectAll('div')			 // select all the elements you want to work with
+      .data([5,6,2,8,4,9,1]) // define your data
+      .enter()               // enter your data
+      .append('div')         // append elements
+      .text((d) => `$${d.toFixed(2)}`)
+      .style('padding', '1em')
+      .style('background-color', 'red')
+      .style('margin', '1px')
+      .style('width', (d) => `${d / 10 * 100}%`)
+      .style('height', '3rem')
+      .style('border-radius', '3rem')
+      .style('background-image', 'linear-gradient(to left, #e66465, #9198e5)')
+      .style('color', (d) => `hsl(${d / 10 * 360}, 100%, 50%)`)
+      .style('font-family', 'Helvetica')
+      .style('font-size', (d) => `${d * 5}px`)
+      .style('opacity', (d) => `${d / 5}`)
+
+
+      function makeRandomData(n) {
+        const array = []
+        for (let i = 0; i < n; i += 1) {
+          array.push({ a: Math.random(), b: Math.random(), c: Math.random() })
+        }
+        return array
+      }
+
+      // const data = makeRandomData(11);
+
+      // d3.select('#svg')
+      //   .style('border', '1px solid #000')
+      //   .selectAll('ellipse')
+      //   .data(data)
+      //   .enter()
+      //   .append('ellipse')
+      //   .attr('cx', (d, i) => i * 500 / data.length)
+      //   .attr('cy', d => d.a * 500)
+      //   .attr('rx', d => d.b * 50)
+      //   .attr('ry', d => d.c * 50)
+      //   .attr('fill', d => `rgb(${d.a}, ${d.b}, ${d.c})`)
+      //   .attr('opacity', () => 0.5)
+      //   .attr('stroke', d => `hsl(${360 * d.b}, 100%, 50%`)
+      //   .attr('stroke-width', d => d.b * 100)
+
+      d3.csv('cities.csv')
+        .then((data) => {
+          const x_extent = d3.extent(data, (d) => parseFloat(d.x))
+          const y_extent = d3.extent(data, (d) => parseFloat(d.y))
+          
+          // Create a linear scale
+          const xScale = d3.scaleLinear()
+            .domain(x_extent) // Set the domain
+            .range([700, 100])     // Set the range
+
+          const yScale = d3.scaleLinear()
+            .domain(y_extent)
+            .range([0, 350])
+
+          const countries = Array.from(new Set(data.map(d => d.country)));
+          const countryScale = d3.scaleOrdinal()
+            .domain(countries)
+            .range(['cornflowerblue', 'gold', 'green', 'tomato'])
+
+          const popExtent = d3.extent(data, (d) => parseFloat(d.population))
+          const popScale = d3.scaleSqrt()
+            .domain(popExtent)
+            .range([10, 200])
+
+          const node = d3.select('#svg')
+            .style('border', '1px solid')
+            // select all <circle>s in #svg id html tag
+            .selectAll('g')
+            .data(data)
+            .enter()
+
+          const groups = node
+            .append('g')
+          
+          groups
+            .append('circle')
+            .attr('cx', d => xScale(d.x))
+            .attr('cy', d => parseFloat(d.y) * 2 + 250)
+            // .attr('cy', d => yScale(d.y))
+            .attr('r', d => popScale(d.population))
+            .attr('opacity', 0.25)
+            .attr('fill', d => countryScale(d.country))
+
+          groups
+            .append('text')
+            .text((d) => d.label) // set the text
+            .attr('x', (d) => xScale(d.x))
+            .attr('y', (d) => parseFloat(d.y) * 2 + 250)
+            // .attr('y', d => yScale(d.y))
+            .style('font-family', 'Helvetica')
+            .style('font-size', '18px')
+
+          const angle = Math.PI * 1.75
+          groups
+            .append('line')
+            .attr('x1', d => xScale(d.x))
+            // .attr('y1', d => yScale(d.y))
+            .attr('y1', (d) => parseFloat(d.y) * 2 + 250)
+            .attr('x2', d => xScale(d.x) + (Math.cos(angle) * popScale(d.population)))
+            // .attr('y2', d => yScale(d.y) + (Math.sin(angle) * popScale(d.population)))
+            .attr('y2', d => parseFloat(d.y) * 2 + 250 + (Math.sin(angle) * popScale(d.population)))
+            .attr('stroke', '#000')
+        })
+
+      d3.json('titanic-passengers.json')
+        .then((json) => {
+          console.log(json)
+        })
+
+  </script>
+</body>
+</html>
