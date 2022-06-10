@@ -1,97 +1,77 @@
-export default async function passengersAge(data) {
+export default async function passengersPClass(data) {
   const width = 600;
   const height = 300;
   const margin = 40;
 
-  const getPassengersByAge = (data, ageRange) => {
-    const ageData = [];
-    const ages = data.map((passenger) => passenger.fields.age);
-    const filteredAges = ages.filter((age) => age !== undefined);
-    const maxAge = Math.max(...filteredAges);
-    const numBuckets = Math.floor(maxAge / ageRange);
+  const getPassengersByPClass = (data) => {
+    const pclassData = [];
+    const pclasses = data.map((passenger) => passenger.fields.pclass);
+    const numBuckets = Math.max(...pclasses);
 
-    for (let i = 0; i < numBuckets + 1; i++) {
-      ageData.push({
-        ageRange: i * ageRange,
+    for (let i = 1; i <= numBuckets; i++) {
+      pclassData.push({
+        pclass: i,
         survived: 0,
         notSurvived: 0,
         total: 0
       })
     }
 
-    const passengersWithAges = data.filter((passenger) => passenger.fields.age !== undefined);
-
-    for (const passenger of passengersWithAges) {
-      const age = passenger.fields.age;
-      // find bucket they belong to
-      const bucket = Math.floor(age / ageRange) * ageRange; // 10, 40, 0
-      const index = ageData.findIndex((object) => object.ageRange === bucket)
-      ageData[index].total += 1;
-      passenger.fields.survived === "Yes" ? ageData[index].survived += 1 : ageData[index].notSurvived += 1;
+    for (const passenger of data) {
+      const pclass = passenger.fields.pclass;
+      const index = pclassData.findIndex((object) => object.pclass === pclass)
+      pclassData[index].total += 1;
+      passenger.fields.survived === "Yes" ? pclassData[index].survived += 1 : pclassData[index].notSurvived += 1;
     }
-    return ageData;
+    return pclassData;
   };
   
-  const ageData = getPassengersByAge(data, 10);
+  const pclassData = getPassengersByPClass(data);
+  console.log(pclassData);
 
   /* 
     [
-      {
-        ageRange: 0,
-        survived: 430,
-        notSurvived: 114,
-        total: 544
-      },
-      {
-        ageRange: 10,
-        survived: 310,
-        notSurvived: 102,
-        total: 412
-      },
+      {pclass: 1, survived: 136, notSurvived: 80, total: 216},
+      {pclass: 2, survived: 87, notSurvived: 97, total: 184},
+      {pclass: 3, survived: 119, notSurvived: 372, total: 491},
     ]
   */
 
- const subgroups = ['survived', 'notSurvived', ];
- 
- const ages = ageData.map((obj) => obj.ageRange)
+  const subgroups = ['survived', 'notSurvived'];
 
-  // // Make a scale to set the color
-  // const colorScale = d3.scaleSequential()
-  //   .domain([0, 2])
-  //   .interpolator(d3.interpolateRainbow);
+  const pclasses = pclassData.map((obj) => obj.pclass)
 
-  // color palette = one color per subgroup
   const color = d3.scaleOrdinal()
     .domain(subgroups)
-    .range(['#377eb8', '#e41a1c',])
+    .range(['#87cefa', '#800000'])
   
   const xscale = d3.scaleBand()
-    .domain(ages)
+    .domain(pclasses)
     .range([margin, width])
     .padding(0.05) // space between bars
 
   // yscale
-  // const popExtent = d3.extent(ageData, d => d.total)
+  const popExtent = d3.extent(pclassData, d => d.total)
   const yscale = d3.scaleLinear()
     // .domain(popExtent)
-    .domain([0, 240])
+    .domain([0, 500])
     .range([height, margin])
 
 
-  const svg = d3.select('#svg_age');
+  const svg = d3.select('#svg_pclass');
 
   const title = svg
-  .append('g')
+    .append('g')
 
   title
     .append('text')
-    .text('Survivors and Casualties Grouped By Age Aboard the Titanic')
+    .text('Survivors and Casualties Grouped By Passenger Class')
     .attr('transform', `translate(${width / 2 - 185}, 20)`)
     .attr('class', 'labelText')
 
   // axis generator using the xscale to configure it
   const bottomAxis = d3.axisBottom(xscale)
-    .tickFormat((d) => `${d} - ${d + 9}`)
+    .tickFormat((d) => `${d === 1 ? `${d}st` : d === 2 ? `${d}nd` : `${d}rd`} Class`)
 
   svg
     .append('g')
@@ -107,7 +87,7 @@ export default async function passengersAge(data) {
 
 
     const stackedData = d3.stack()
-      .keys(subgroups)(ageData)
+      .keys(subgroups)(pclassData)
 
     svg.append('g')
       .selectAll('g')
@@ -118,7 +98,7 @@ export default async function passengersAge(data) {
         .selectAll('rect')
         .data((d) => d)
         .enter().append('rect')
-          .attr("x", (d) => xscale(d.data.ageRange))
+          .attr("x", (d) => xscale(d.data.pclass))
           .attr("y", (d) => yscale(d[1]))
           .attr('height', (d) => yscale(d[0]) - yscale(d[1]))
           .attr('width', xscale.bandwidth())
@@ -133,7 +113,7 @@ export default async function passengersAge(data) {
       .enter()
       .append('circle')
       .attr('r', '5')
-      .attr('cx', width - 100)
+      .attr('cx', 70)
       .attr('cy', (d, i) => (i * 20) + 55)
       .attr('fill', (d, i) => color(i))
       // .attr('fill', (d, i) => colorScale(i))
@@ -144,7 +124,7 @@ export default async function passengersAge(data) {
       .enter()
       .append('text')
       .text((d) => `${d[0].toUpperCase() + d.slice(1)}`)
-      .attr('x', width - 85)
+      .attr('x', 85)
       .attr('y', (d, i) => (i * 20) + 60)
       .attr('class', 'labelText')
 
