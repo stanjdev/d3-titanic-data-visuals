@@ -27,7 +27,7 @@ export default async function passengersPClass(data) {
   };
   
   const pclassData = getPassengersByPClass(data);
-  console.log(pclassData);
+  // console.log(pclassData);
 
   /* 
     [
